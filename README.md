@@ -531,3 +531,11 @@ Config(
 See [`requirements.txt`](requirements.txt) for the full pinned dependency list.
 
 Core dependencies: `torch`, `torchvision`, `ultralytics`, `segmentation-models-pytorch`, `opencv-python`, `numpy`, `pandas`, `xgboost`, `scikit-learn`.
+
+---
+
+## 🚧 Project Status
+
+> **Learning Project**
+>
+> This project is currently under active development and continuous improvement. It was created primarily for learning, research, and portfolio purposes. While most core components are implemented, the system is **not yet production-ready**, and features, models, and performance will continue to evolve.
