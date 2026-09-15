@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # SQL Server database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong@Passw0rd"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    command: serve
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      APP_DATABASE_URL: mssql+pyodbc://sqlserver/omni_agri?driver=ODBC+Driver+17+for+SQL+Server&TrustServerCertificate=yes&uid=sa&pwd=YourStrong@Passw0rd
+      REDIS_URL: redis://redis:6379/0
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen3:8b
+      SECRET_KEY: ${SECRET_KEY:-change-this-secret-key}
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    depends_on:
+      sqlserver:
+        condition: service_started
+      redis:
+        condition: service_started
+      ollama:
+        condition: service_started
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build: .
+    environment:
+      APP_DATABASE_URL: mssql+pyodbc://sqlserver/omni_agri?driver=ODBC+Driver+17+for+SQL+Server&TrustServerCertificate=yes&uid=sa&pwd=YourStrong@Passw0rd
+      REDIS_URL: redis://redis:6379/0
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen3:8b
+      SECRET_KEY: ${SECRET_KEY:-change-this-secret-key}
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    depends_on:
+      sqlserver:
+        condition: service_started
+      redis:
+        condition: service_started
+      ollama:
+        condition: service_started
+    command: celery -A src.worker worker --loglevel=info --concurrency=1
+
+  chainlit:
+    build: .
+    ports:
+      - "8500:8500"
+    environment:
+      APP_DATABASE_URL: mssql+pyodbc://sqlserver/omni_agri?driver=ODBC+Driver+17+for+SQL+Server&TrustServerCertificate=yes&uid=sa&pwd=YourStrong@Passw0rd
+      REDIS_URL: redis://redis:6379/0
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen3:8b
+      SECRET_KEY: ${SECRET_KEY:-change-this-secret-key}
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    depends_on:
+      sqlserver:
+        condition: service_started
+      redis:
+        condition: service_started
+      ollama:
+        condition: service_started
+      api:
+        condition: service_started
+    command: chainlit run app.py -h 0.0.0.0 -p 8500
+
+volumes:
+  sqlserver_data:
+  redis_data:
+  ollama_data:

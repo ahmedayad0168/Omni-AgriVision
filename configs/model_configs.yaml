@@ -1,0 +1,62 @@
+detection:
+  model: models/detection/yolo11m_finetuned.pt
+  confidence_threshold: 0.25
+  iou_threshold: 0.45
+  image_size: 320  # Match training image size
+  classes:
+    - Tomato Bacterial Spot
+    - Tomato Early blight
+    - Tomato Late blight
+    - Tomato Leaf Mold
+    - Tomato Septoria leaf spot
+    - Tomato Spider mite
+    - Tomato Target Spot
+    - Tomato Yellow Leaf Curl Virus
+    - Tomato healthy
+    - Tomato mosaic virus
+
+classification:
+  model_name: efficientnet_b0
+  input_size: 224
+  num_classes: 38
+  confidence_threshold: 0.5
+
+segmentation:
+  model_name: deeplabv3plus_resnet50
+  input_size: 512
+  num_classes: 2  # background, disease
+  encoder_weights: imagenet
+
+anomaly:
+  model_name: vae
+  latent_dim: 128
+  input_size: 224
+  anomaly_threshold: 0.85
+
+yield_prediction:
+  model_type: gradient_boosting
+  features:
+    - plant_count
+    - healthy_percentage
+    - disease_severity_mean
+    - pest_density
+    - temperature_mean
+    - humidity_mean
+    - rainfall_total
+    - ndvi_mean
+
+tracking:
+  algorithm: bytetrack
+  track_thresh: 0.5
+  high_thresh: 0.6
+  match_thresh: 0.8
+
+video:
+  target_fps: 5
+  frame_interval: 6
+  max_frames: 1000
+
+agent:
+  model: "qwen3:8b"
+  temperature: 0.3
+  max_tokens: 2000

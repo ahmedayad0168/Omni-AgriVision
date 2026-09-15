@@ -1,0 +1,137 @@
+# Pipeline configuration for Omni-AgriVision
+
+# Video processing pipeline
+video_pipeline:
+  frame_sampling:
+    method: "uniform"  # uniform, random, keyframe
+    target_fps: 5
+    max_frames: 1000
+    quality_threshold: 0.7
+  
+  preprocessing:
+    resize: [640, 640]
+    normalize: true
+    augment: false
+  
+  detection:
+    enabled: true
+    batch_size: 8
+    save_detections: true
+    min_confidence: 0.25
+  
+  tracking:
+    enabled: true
+    algorithm: "bytetrack"
+    min_track_length: 3
+  
+  classification:
+    enabled: true
+    batch_size: 16
+    only_plants: true
+    min_confidence: 0.5
+  
+  segmentation:
+    enabled: true
+    only_diseased: true
+    min_severity: 0.1
+
+# Analysis pipeline
+analysis_pipeline:
+  zoning:
+    enabled: true
+    grid_size: 4  # 4x4 grid
+    method: "spatial"  # spatial, clustering
+  
+  health_scoring:
+    enabled: true
+    weights:
+      healthy_ratio: 0.4
+      disease_severity: 0.3
+      pest_density: 0.2
+      ndvi: 0.1
+  
+  yield_prediction:
+    enabled: true
+    model: "gradient_boosting"
+    include_weather: true
+    include_satellite: true
+  
+  anomaly_detection:
+    enabled: true
+    threshold: 0.85
+    auto_alert: true
+
+# Data storage
+storage:
+  upload:
+    max_file_size: 1073741824  # 1GB in bytes
+    allowed_formats: [".mp4", ".avi", ".mov", ".mkv"]
+  
+  output:
+    save_frames: false
+    save_detections: true
+    save_heatmaps: true
+    save_reports: true
+  
+  retention:
+    raw_videos: 7  # days
+    processed_frames: 30  # days
+    detections: 90  # days
+    reports: 365  # days
+
+# Notification settings
+notifications:
+  enabled: true
+  channels:
+    telegram:
+      enabled: false
+      alert_levels: ["HIGH", "CRITICAL"]
+    email:
+      enabled: false
+      alert_levels: ["WARNING", "HIGH", "CRITICAL"]
+  
+  rules:
+    disease_severity:
+      threshold: 0.3
+      level: "HIGH"
+    pest_density:
+      threshold: 0.1
+      level: "WARNING"
+    health_score:
+      threshold: 0.5
+      level: "WARNING"
+
+# API settings
+api:
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 60
+  
+  caching:
+    enabled: true
+    ttl: 300  # seconds
+  
+  batch_processing:
+    max_batch_size: 10
+    timeout: 3600  # seconds
+
+# Monitoring
+monitoring:
+  logging:
+    level: "INFO"
+    format: "json"
+  
+  metrics:
+    enabled: true
+    export_interval: 60  # seconds
+  
+  health_checks:
+    enabled: true
+    interval: 30  # seconds
+
+# Development settings
+development:
+  debug_mode: false
+  mock_models: false
+  test_data: false
+  fast_processing: false
